@@ -73,10 +73,13 @@ export const PaymentProvider = ({ children }) => {
         const interval = setInterval(async () => {
           try {
             const paid = await checkInvoice({ id, apolloClient })
-            if (paid) resolve()
+            if (paid) {
+              resolve()
+              clearInterval(interval)
+            }
           } catch (err) {
-            clearInterval(interval)
             reject(err)
+            clearInterval(interval)
           }
         }, FAST_POLL_INTERVAL)
       })
