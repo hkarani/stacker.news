@@ -15,6 +15,7 @@ import { useShowModal } from './modal'
 import { Button } from 'react-bootstrap'
 import { useRoot } from './root'
 import { commentSubTreeRootId } from '@/lib/item'
+import { PaymentProvider } from './payment'
 
 export function ReplyOnAnotherPage ({ item }) {
   const rootId = commentSubTreeRootId(item)
@@ -160,26 +161,28 @@ export default forwardRef(function Reply ({ item, onSuccess, replyOpen, children
             baseLineItems={postCommentBaseLineItems({ baseCost: 1, comment: true, me: !!me })}
             useRemoteLineItems={postCommentUseRemoteLineItems({ parentId: item.id, me: !!me })}
           >
-            <Form
-              initial={{
-                text: ''
-              }}
-              schema={commentSchema}
-              invoiceable
-              onSubmit={onSubmit}
-              storageKeyPrefix={`reply-${parentId}`}
-            >
-              <MarkdownInput
-                name='text'
-                minRows={6}
-                autoFocus={!replyOpen}
-                required
-                appendValue={quote}
-                placeholder={placeholder}
-                hint={sub?.moderated && 'this territory is moderated'}
-              />
-              <ItemButtonBar createText='reply' hasCancel={false} />
-            </Form>
+            <PaymentProvider>
+              <Form
+                initial={{
+                  text: ''
+                }}
+                schema={commentSchema}
+                invoiceableV2
+                onSubmit={onSubmit}
+                storageKeyPrefix={`reply-${parentId}`}
+              >
+                <MarkdownInput
+                  name='text'
+                  minRows={6}
+                  autoFocus={!replyOpen}
+                  required
+                  appendValue={quote}
+                  placeholder={placeholder}
+                  hint={sub?.moderated && 'this territory is moderated'}
+                />
+                <ItemButtonBar createText='reply' hasCancel={false} />
+              </Form>
+            </PaymentProvider>
           </FeeButtonProvider>
         </div>}
     </div>

@@ -107,7 +107,7 @@ function RawWebLNProvider ({ children }) {
     })
   }, [setEnabledProviders])
 
-  const value = { provider: { ...provider, sendPayment: sendPaymentWithToast }, enabledProviders, setProvider }
+  const value = { provider: { ...provider, sendPayment: sendPaymentWithToast, sendPaymentV2: provider?.sendPayment }, enabledProviders, setProvider }
   return (
     <WebLNContext.Provider value={value}>
       {children}

@@ -99,7 +99,7 @@ export function Invoice ({ invoice, modal, onPayment, info, successVerb, webLn }
   )
 }
 
-const JITInvoice = ({ invoice: { id, hash, hmac, expiresAt }, onPayment, onCancel, onRetry }) => {
+export function JITInvoice ({ invoice: { id, hash, hmac, expiresAt }, onPayment, onCancel, onRetry }) {
   const { data, loading, error } = useQuery(INVOICE, {
     pollInterval: FAST_POLL_INTERVAL,
     variables: { id }

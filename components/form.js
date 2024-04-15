@@ -30,6 +30,7 @@ import { whenRange } from '@/lib/time'
 import { useFeeButton } from './fee-button'
 import Thumb from '@/svgs/thumb-up-fill.svg'
 import Info from './info'
+import { InvoiceCanceledError, usePayment } from './payment'
 
 export function SubmitButton ({
   children, variant, value, onClick, disabled, nonDisabledText, ...props
@@ -791,11 +792,13 @@ const StorageKeyPrefixContext = createContext()
 
 export function Form ({
   initial, schema, onSubmit, children, initialError, validateImmediately,
-  storageKeyPrefix, validateOnChange = true, invoiceable, innerRef, ...props
+  storageKeyPrefix, validateOnChange = true, invoiceable, invoiceableV2, innerRef, ...props
 }) {
   const toaster = useToast()
   const initialErrorToasted = useRef(false)
   const feeButton = useFeeButton()
+  const payment = usePayment()
+
   useEffect(() => {
     if (initialError && !initialErrorToasted.current) {
       toaster.danger('form error: ' + initialError.message || initialError.toString?.())
@@ -831,24 +834,24 @@ export function Form ({
   const onSubmitInner = useCallback(async (values, ...args) => {
     try {
       if (onSubmit) {
-        // extract cost from formik fields
-        // (cost may also be set in a formik field named 'amount')
-        const cost = feeButton?.total || values?.amount
-        if (cost) {
-          values.cost = cost
+        let hash, hmac
+        if (invoiceableV2) {
+          // if user has enough funds, this does nothing and hash and hmac are not set
+          // else it will prompt for payment
+          ({ hash, hmac } = await payment())
         }
-        await onSubmit(values, ...args)
+        await onSubmit({ hash, hmac, ...values }, ...args)
         if (!storageKeyPrefix) return
         clearLocalStorage(values)
       }
     } catch (err) {
+      if (err instanceof InvoiceCanceledError) {
+        return
+      }
       const msg = err.message || err.toString?.()
-      // ignore errors from JIT invoices or payments from attached wallets
-      // that mean that submit failed because user aborted the payment
-      if (msg === 'modal closed' || msg === 'invoice canceled') return
       toaster.danger('submit error: ' + msg)
     }
-  }, [onSubmit, feeButton?.total, toaster, clearLocalStorage, storageKeyPrefix])
+  }, [onSubmit, feeButton?.total, toaster, clearLocalStorage, storageKeyPrefix, payment])
 
   return (
     <Formik
